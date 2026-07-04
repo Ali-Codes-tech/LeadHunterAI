@@ -1,0 +1,40 @@
+QMainWindow {
+    background-color: #202124;
+}
+
+QWidget {
+    background-color: #202124;
+    color: white;
+    font-size: 11pt;
+}
+
+QPushButton {
+    background-color: #0B57D0;
+    color: white;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+QPushButton:hover {
+    background-color: #1A73E8;
+}
+
+QLineEdit,
+QComboBox {
+    background-color: #303134;
+    color: white;
+    border: 1px solid #5F6368;
+    padding: 6px;
+}
+
+QTableWidget {
+    background-color: #303134;
+    color: white;
+    gridline-color: #5F6368;
+}
+
+QHeaderView::section {
+    background-color: #3C4043;
+    color: white;
+    padding: 6px;
+}
