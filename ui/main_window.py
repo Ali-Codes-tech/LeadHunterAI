@@ -63,6 +63,12 @@ class MainWindow(QMainWindow):
         self.city_combo = QComboBox()
         self.city_combo.addItems(["Dallas"])
 
+        self.provider_combo = QComboBox()
+        self.provider_combo.addItems([
+            "Dummy",
+            "OSM"
+        ])
+
         self.search_btn = QPushButton("Search")
         self.search_btn.clicked.connect(self.search_businesses)
 
@@ -70,6 +76,7 @@ class MainWindow(QMainWindow):
         search_layout.addWidget(self.country_combo)
         search_layout.addWidget(self.state_combo)
         search_layout.addWidget(self.city_combo)
+        search_layout.addWidget(self.provider_combo)
         search_layout.addWidget(self.search_btn)
 
         main_layout.addLayout(search_layout)
@@ -125,6 +132,9 @@ class MainWindow(QMainWindow):
         country = self.country_combo.currentText()
         state = self.state_combo.currentText()
         city = self.city_combo.currentText()
+
+        provider = self.provider_combo.currentText()
+        self.business_service.set_provider(provider)
 
         results = self.business_service.search(
             business,

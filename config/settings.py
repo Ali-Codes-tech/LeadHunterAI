@@ -1,12 +1,7 @@
-import os
-from dotenv import load_dotenv
+APP_NAME = "LeadHunter AI"
 
-load_dotenv()
+VERSION = "0.2"
 
+DATABASE_NAME = "leadhunter.db"
 
-class Settings:
-
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-
-
-settings = Settings()
+DEFAULT_PROVIDER = "Dummy"
