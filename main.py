@@ -1,25 +1,23 @@
 import sys
-from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-from ui.main_window import MainWindow
 from database.database_manager import DatabaseManager
+from ui.main_window import MainWindow
 
-app = QApplication(sys.argv)
 
-# Load dark theme
-theme_path = Path("assets/styles/dark_theme.qss")
+def main():
 
-if theme_path.exists():
-    with open(theme_path, "r", encoding="utf-8") as file:
-        app.setStyleSheet(file.read())
+    app = QApplication(sys.argv)
 
-# Create database
-database = DatabaseManager()
+    database = DatabaseManager()
 
-# Create main window
-window = MainWindow(database)
-window.show()
+    window = MainWindow(database)
 
-sys.exit(app.exec())
+    window.show()
+
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

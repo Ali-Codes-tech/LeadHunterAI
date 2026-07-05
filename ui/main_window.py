@@ -15,14 +15,18 @@ from services.business_service import BusinessService
 
 
 class MainWindow(QMainWindow):
+
     def __init__(self, database):
         super().__init__()
 
         self.database = database
         self.business_service = BusinessService()
 
-        self.setWindowTitle("LeadHunter AI")
+        self.setWindowTitle("🚀 LeadHunter Pro")
         self.resize(1200, 700)
+
+        # Store current search results
+        self.current_results = []
 
         # ==========================
         # Central Widget
@@ -35,23 +39,23 @@ class MainWindow(QMainWindow):
         # ==========================
         # Title
         # ==========================
-        title = QLabel("🚀 LeadHunter AI")
+        title = QLabel("🚀 LeadHunter Pro")
         title.setStyleSheet("""
-            font-size: 26px;
-            font-weight: bold;
-            padding: 10px;
+            font-size:26px;
+            font-weight:bold;
+            padding:10px;
         """)
 
         main_layout.addWidget(title)
 
         # ==========================
-        # Search Area
+        # Search Layout
         # ==========================
         search_layout = QHBoxLayout()
 
         self.business_input = QLineEdit()
         self.business_input.setPlaceholderText(
-            "Business Type (e.g. Car Dealers)"
+            "Business Type (Example: Car Dealers)"
         )
 
         self.country_combo = QComboBox()
@@ -63,10 +67,10 @@ class MainWindow(QMainWindow):
         self.city_combo = QComboBox()
         self.city_combo.addItems(["Dallas"])
 
+        # Provider
         self.provider_combo = QComboBox()
         self.provider_combo.addItems([
-            "Dummy",
-            "OSM"
+            "Dummy"
         ])
 
         self.search_btn = QPushButton("Search")
@@ -103,9 +107,17 @@ class MainWindow(QMainWindow):
         # ==========================
         self.statusBar().showMessage("Ready")
 
-        # Load saved businesses
-        saved = self.database.get_all_businesses()
-        self.display_businesses(saved)
+        # ==========================
+        # Load Saved Businesses
+        # ==========================
+        try:
+            saved = self.database.get_all_businesses()
+
+            if saved:
+                self.display_businesses(saved)
+
+        except Exception as e:
+            print("Database load error:", e)
 
     # ==========================
     # Display Businesses
@@ -116,19 +128,55 @@ class MainWindow(QMainWindow):
 
         for row, item in enumerate(businesses):
 
-            self.table.setItem(row, 0, QTableWidgetItem(item["name"]))
-            self.table.setItem(row, 1, QTableWidgetItem(item["rating"]))
-            self.table.setItem(row, 2, QTableWidgetItem(item["reviews"]))
-            self.table.setItem(row, 3, QTableWidgetItem(item["phone"]))
-            self.table.setItem(row, 4, QTableWidgetItem(item["website"]))
-            self.table.setItem(row, 5, QTableWidgetItem(item["score"]))
+            self.table.setItem(
+                row,
+                0,
+                QTableWidgetItem(str(item.get("name", "")))
+            )
+
+            self.table.setItem(
+                row,
+                1,
+                QTableWidgetItem(str(item.get("rating", "")))
+            )
+
+            self.table.setItem(
+                row,
+                2,
+                QTableWidgetItem(str(item.get("reviews", "")))
+            )
+
+            self.table.setItem(
+                row,
+                3,
+                QTableWidgetItem(str(item.get("phone", "")))
+            )
+
+            self.table.setItem(
+                row,
+                4,
+                QTableWidgetItem(str(item.get("website", "")))
+            )
+
+            self.table.setItem(
+                row,
+                5,
+                QTableWidgetItem(str(item.get("score", "")))
+            )
 
     # ==========================
     # Search Businesses
     # ==========================
     def search_businesses(self):
 
-        business = self.business_input.text()
+        business = self.business_input.text().strip()
+
+        if not business:
+            self.statusBar().showMessage(
+                "Please enter a business type."
+            )
+            return
+
         country = self.country_combo.currentText()
         state = self.state_combo.currentText()
         city = self.city_combo.currentText()
@@ -136,20 +184,28 @@ class MainWindow(QMainWindow):
         provider = self.provider_combo.currentText()
         self.business_service.set_provider(provider)
 
-        results = self.business_service.search(
-            business,
-            country,
-            state,
-            city
-        )
+        try:
 
-        # Save businesses to database
-        for item in results:
-            self.database.save_business(item)
+            results = self.business_service.search(
+                business,
+                country,
+                state,
+                city
+            )
 
-        # Show businesses in table
-        self.display_businesses(results)
+            self.current_results = results
 
-        self.statusBar().showMessage(
-            f"Found {len(results)} businesses"
-        )
+            for item in results:
+                self.database.save_business(item)
+
+            self.display_businesses(results)
+
+            self.statusBar().showMessage(
+                f"Found {len(results)} businesses."
+            )
+
+        except Exception as e:
+            print(e)
+            self.statusBar().showMessage(
+                "Search failed."
+            )

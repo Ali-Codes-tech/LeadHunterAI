@@ -1,5 +1,4 @@
 from providers.dummy_provider import DummyProvider
-from providers.osm_provider import OSMProvider
 
 
 class ProviderManager:
@@ -7,10 +6,8 @@ class ProviderManager:
     def __init__(self):
         self.providers = {
             "Dummy": DummyProvider(),
-            "OSM": OSMProvider(),
         }
 
-        # Default provider
         self.current_provider = "Dummy"
 
     def get_provider(self):
