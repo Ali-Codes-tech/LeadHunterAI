@@ -19,6 +19,9 @@ class Lead:
 
     score: int = 0
 
+    # ⭐ New field
+    favorite: bool = False
+
     status: str = "NEW"
 
     notes: str = ""

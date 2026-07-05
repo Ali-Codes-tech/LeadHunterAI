@@ -1,5 +1,7 @@
+from PySide6.QtGui import QAction
 from ui.dashboard_widget import DashboardWidget
-
+from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -34,6 +36,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("🚀 LeadHunter Pro")
         self.resize(1200, 700)
+        self.create_menu()
 
         # ==========================
         # Central Widget
@@ -115,9 +118,10 @@ class MainWindow(QMainWindow):
 
         self.table = QTableWidget()
 
-        self.table.setColumnCount(6)
+        self.table.setColumnCount(7)
 
         self.table.setHorizontalHeaderLabels([
+            "⭐",
             "Business",
             "Rating",
             "Reviews",
@@ -156,7 +160,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print("Database Error:", e)
 
-    # ===================================================
+      # ===================================================
     # Display Businesses
     # ===================================================
 
@@ -166,41 +170,73 @@ class MainWindow(QMainWindow):
 
         for row, item in enumerate(businesses):
 
-            self.table.setItem(
-                row,
-                0,
-                QTableWidgetItem(str(item.get("name", "")))
-            )
+        # ⭐ Favorite
+            favorite = "★" if item.get("favorite", 0) else "☆"
 
-            self.table.setItem(
-                row,
-                1,
-                QTableWidgetItem(str(item.get("rating", "")))
-            )
+        self.table.setItem(
+            row,
+            0,
+            QTableWidgetItem(favorite)
+        )
 
-            self.table.setItem(
-                row,
-                2,
-                QTableWidgetItem(str(item.get("reviews", "")))
-            )
+        # Business
+        self.table.setItem(
+            row,
+            1,
+            QTableWidgetItem(str(item.get("name", "")))
+        )
 
-            self.table.setItem(
-                row,
-                3,
-                QTableWidgetItem(str(item.get("phone", "")))
-            )
+        # Rating
+        self.table.setItem(
+            row,
+            2,
+            QTableWidgetItem(str(item.get("rating", "")))
+        )
 
-            self.table.setItem(
-                row,
-                4,
-                QTableWidgetItem(str(item.get("website", "")))
-            )
+        # Reviews
+        self.table.setItem(
+            row,
+            3,
+            QTableWidgetItem(str(item.get("reviews", "")))
+        )
 
-            self.table.setItem(
-                row,
-                5,
-                QTableWidgetItem(str(item.get("score", "")))
-            )
+        # Phone
+        self.table.setItem(
+            row,
+            4,
+            QTableWidgetItem(str(item.get("phone", "")))
+        )
+
+        # Website
+        self.table.setItem(
+            row,
+            5,
+            QTableWidgetItem(str(item.get("website", "")))
+        )
+
+        # Score
+        score = int(item.get("score", 0))
+
+        score_item = QTableWidgetItem(str(score))
+
+        from PySide6.QtGui import QColor
+
+        if score >= 80:
+            score_item.setBackground(QColor("#2ecc71"))
+            score_item.setForeground(QColor("white"))
+
+        elif score >= 60:
+            score_item.setBackground(QColor("#f1c40f"))
+            score_item.setForeground(QColor("black"))
+
+        else:
+            score_item.setBackground(QColor("#e74c3c"))
+            score_item.setForeground(QColor("white"))
+
+        score_item.setTextAlignment(Qt.AlignCenter)
+
+        self.table.setItem(row, 6, score_item)
+  
 
     # ===================================================
     # Search
@@ -316,7 +352,7 @@ class MainWindow(QMainWindow):
             f"CSV exported successfully!\n\n{filepath}"
         )
 
-    # ===================================================
+       # ===================================================
     # Lead Details
     # ===================================================
 
@@ -328,5 +364,64 @@ class MainWindow(QMainWindow):
         lead = self.current_results[row]
 
         dialog = LeadDetails(lead)
-
         dialog.exec()
+
+    # ===================================================
+    # Menu
+    # ===================================================
+
+    def create_menu(self):
+
+        menubar = self.menuBar()
+
+        file_menu = menubar.addMenu("File")
+
+        export_action = QAction("Export CSV", self)
+        export_action.triggered.connect(self.export_csv)
+
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(self.close)
+
+        file_menu.addAction(export_action)
+        file_menu.addSeparator()
+        file_menu.addAction(exit_action)
+
+        view_menu = menubar.addMenu("View")
+
+        refresh_action = QAction("Refresh", self)
+        refresh_action.triggered.connect(
+            lambda: self.display_businesses(self.current_results)
+        )
+
+        view_menu.addAction(refresh_action)
+
+        help_menu = menubar.addMenu("Help")
+
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about)
+
+        help_menu.addAction(about_action)
+
+    # ===================================================
+    # About
+    # ===================================================
+
+    def show_about(self):
+
+        QMessageBox.information(
+            self,
+            "About LeadHunter Pro",
+            """LeadHunter Pro
+
+Version: 0.4 Alpha
+
+Built with:
+• Python
+• PySide6
+• SQLite
+• Git
+• GitHub
+
+© 2026 Ali
+"""
+        )
