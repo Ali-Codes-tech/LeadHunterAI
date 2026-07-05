@@ -1,3 +1,5 @@
+from ui.dashboard_widget import DashboardWidget
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -41,6 +43,13 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
 
         main_layout = QVBoxLayout(central)
+
+        # ==========================
+        # Dashboard
+        # ==========================
+
+        self.dashboard = DashboardWidget()
+        main_layout.addWidget(self.dashboard)
 
         # ==========================
         # Title
@@ -229,6 +238,34 @@ class MainWindow(QMainWindow):
             )
 
             self.current_results = results
+            
+            # Update Dashboard
+            self.dashboard.searches.setValue(
+                 int(self.dashboard.searches.value.text()) + 1
+            )
+
+            self.dashboard.saved.setValue(
+                 len(self.database.get_all_businesses())
+            )
+
+            high_score = len([
+                b for b in results
+                if int(b.get("score", 0)) >= 80
+            ])
+
+            self.dashboard.high.setValue(high_score)
+
+            if results:
+                avg = sum(
+                    int(b.get("score", 0))
+                    for b in results
+                ) / len(results)
+            else:
+                avg = 0
+
+            self.dashboard.average.setValue(
+                round(avg)
+            )
 
             for item in results:
                 self.database.save_business(item)
