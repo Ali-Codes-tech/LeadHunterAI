@@ -1,30 +1,38 @@
 import csv
+import os
 
 
 class ExportService:
 
-    def export_csv(self, leads, filename):
+    def export_csv(self, businesses, filename):
 
-        with open(filename, "w", newline="", encoding="utf-8") as file:
+        # Create exports folder if it doesn't exist
+        os.makedirs("exports", exist_ok=True)
+
+        filepath = os.path.join("exports", filename)
+
+        with open(filepath, "w", newline="", encoding="utf-8") as file:
 
             writer = csv.writer(file)
 
             writer.writerow([
                 "Business",
-                "Phone",
-                "Website",
                 "Rating",
                 "Reviews",
+                "Phone",
+                "Website",
                 "Score"
             ])
 
-            for lead in leads:
+            for item in businesses:
 
                 writer.writerow([
-                    lead.business_name,
-                    lead.phone,
-                    lead.website,
-                    lead.rating,
-                    lead.reviews,
-                    lead.score
+                    item.get("name", ""),
+                    item.get("rating", ""),
+                    item.get("reviews", ""),
+                    item.get("phone", ""),
+                    item.get("website", ""),
+                    item.get("score", "")
                 ])
+
+        return filepath

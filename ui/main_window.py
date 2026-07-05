@@ -8,10 +8,15 @@ from PySide6.QtWidgets import (
     QPushButton,
     QComboBox,
     QTableWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QMessageBox
 )
 
+from PySide6.QtWidgets import QHeaderView
+
 from services.business_service import BusinessService
+from services.export_service import ExportService
+from ui.lead_details import LeadDetails
 
 
 class MainWindow(QMainWindow):
@@ -21,16 +26,17 @@ class MainWindow(QMainWindow):
 
         self.database = database
         self.business_service = BusinessService()
+        self.export_service = ExportService()
+
+        self.current_results = []
 
         self.setWindowTitle("🚀 LeadHunter Pro")
         self.resize(1200, 700)
 
-        # Store current search results
-        self.current_results = []
-
         # ==========================
         # Central Widget
         # ==========================
+
         central = QWidget()
         self.setCentralWidget(central)
 
@@ -39,9 +45,10 @@ class MainWindow(QMainWindow):
         # ==========================
         # Title
         # ==========================
+
         title = QLabel("🚀 LeadHunter Pro")
         title.setStyleSheet("""
-            font-size:26px;
+            font-size:28px;
             font-weight:bold;
             padding:10px;
         """)
@@ -51,6 +58,7 @@ class MainWindow(QMainWindow):
         # ==========================
         # Search Layout
         # ==========================
+
         search_layout = QHBoxLayout()
 
         self.business_input = QLineEdit()
@@ -67,14 +75,20 @@ class MainWindow(QMainWindow):
         self.city_combo = QComboBox()
         self.city_combo.addItems(["Dallas"])
 
-        # Provider
         self.provider_combo = QComboBox()
         self.provider_combo.addItems([
             "Dummy"
         ])
 
-        self.search_btn = QPushButton("Search")
-        self.search_btn.clicked.connect(self.search_businesses)
+        self.search_btn = QPushButton("🔍 Search")
+        self.search_btn.clicked.connect(
+            self.search_businesses
+        )
+
+        self.export_btn = QPushButton("📤 Export CSV")
+        self.export_btn.clicked.connect(
+            self.export_csv
+        )
 
         search_layout.addWidget(self.business_input)
         search_layout.addWidget(self.country_combo)
@@ -82,15 +96,18 @@ class MainWindow(QMainWindow):
         search_layout.addWidget(self.city_combo)
         search_layout.addWidget(self.provider_combo)
         search_layout.addWidget(self.search_btn)
+        search_layout.addWidget(self.export_btn)
 
         main_layout.addLayout(search_layout)
 
         # ==========================
         # Results Table
         # ==========================
+
         self.table = QTableWidget()
 
         self.table.setColumnCount(6)
+
         self.table.setHorizontalHeaderLabels([
             "Business",
             "Rating",
@@ -100,28 +117,40 @@ class MainWindow(QMainWindow):
             "Score"
         ])
 
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
+        )
+
+        self.table.cellDoubleClicked.connect(
+            self.open_lead
+        )
+
         main_layout.addWidget(self.table)
 
         # ==========================
         # Status Bar
         # ==========================
+
         self.statusBar().showMessage("Ready")
 
         # ==========================
         # Load Saved Businesses
         # ==========================
+
         try:
+
             saved = self.database.get_all_businesses()
 
             if saved:
                 self.display_businesses(saved)
 
         except Exception as e:
-            print("Database load error:", e)
+            print("Database Error:", e)
 
-    # ==========================
+    # ===================================================
     # Display Businesses
-    # ==========================
+    # ===================================================
+
     def display_businesses(self, businesses):
 
         self.table.setRowCount(len(businesses))
@@ -164,25 +193,31 @@ class MainWindow(QMainWindow):
                 QTableWidgetItem(str(item.get("score", "")))
             )
 
-    # ==========================
-    # Search Businesses
-    # ==========================
+    # ===================================================
+    # Search
+    # ===================================================
+
     def search_businesses(self):
 
         business = self.business_input.text().strip()
 
         if not business:
-            self.statusBar().showMessage(
+
+            QMessageBox.warning(
+                self,
+                "Warning",
                 "Please enter a business type."
             )
+
             return
+
+        provider = self.provider_combo.currentText()
+
+        self.business_service.set_provider(provider)
 
         country = self.country_combo.currentText()
         state = self.state_combo.currentText()
         city = self.city_combo.currentText()
-
-        provider = self.provider_combo.currentText()
-        self.business_service.set_provider(provider)
 
         try:
 
@@ -205,7 +240,56 @@ class MainWindow(QMainWindow):
             )
 
         except Exception as e:
-            print(e)
-            self.statusBar().showMessage(
-                "Search failed."
+
+            QMessageBox.critical(
+                self,
+                "Search Error",
+                str(e)
             )
+
+    # ===================================================
+    # Export CSV
+    # ===================================================
+
+    def export_csv(self):
+
+        if not self.current_results:
+
+            QMessageBox.information(
+                self,
+                "Export",
+                "Nothing to export."
+            )
+
+            return
+
+        filename = (
+            self.business_input.text().replace(" ", "_")
+            + ".csv"
+        )
+
+        filepath = self.export_service.export_csv(
+            self.current_results,
+            filename
+        )
+
+        QMessageBox.information(
+            self,
+            "Success",
+            f"CSV exported successfully!\n\n{filepath}"
+        )
+
+    # ===================================================
+    # Lead Details
+    # ===================================================
+
+    def open_lead(self, row, column):
+
+        if not self.current_results:
+            return
+
+        lead = self.current_results[row]
+
+        dialog = LeadDetails(lead)
+
+        dialog.exec()
